@@ -1,1 +1,3 @@
-# metatron
+# Metatron
+
+![Metatron](logo.png)
