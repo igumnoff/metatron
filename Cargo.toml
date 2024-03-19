@@ -10,7 +10,7 @@ license-file = "LICENSE"
 keywords = []
 categories = []
 readme = "README.md"
-description = ""
+description = "Metatron library"
 
 
 
