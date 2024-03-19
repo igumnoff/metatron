@@ -1,0 +1,23 @@
+[package]
+name = "metatron"
+version = "0.0.1"
+edition = "2021"
+
+authors = ["Evgeny Igumnov <igumnovnsk@gmail.com>"]
+repository = "https://github.com/igumnoff/metatron"
+documentation = "https://docs.rs/metatron"
+license-file = "LICENSE"
+keywords = []
+categories = []
+readme = "README.md"
+description = ""
+
+
+
+
+[dependencies]
+anyhow = "1.0.75"
+thiserror = "1.0.44"
+
+[dev-dependencies]
+env_logger = "0.10.0"
