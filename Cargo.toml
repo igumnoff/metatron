@@ -18,6 +18,7 @@ description = "Metatron library"
 [dependencies]
 anyhow = "1.0.75"
 thiserror = "1.0.44"
+shiva = "0.1.10"
 
 [dev-dependencies]
 env_logger = "0.10.0"

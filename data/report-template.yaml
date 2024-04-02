@@ -1,0 +1,20 @@
+title: Employee Report
+page_header:
+column_header:
+  - name: Name
+    width: 20
+  - name: Age
+    width: 5
+  - name: Salary
+    width: 5
+row:
+  - value: $F(name)
+  - value: $F(age)
+  - value: $F(salary)
+column_footer:
+  - value:
+  - value: $P(average_age)
+  - value: $P(average_salary)
+page_footer:
+summary:
+
