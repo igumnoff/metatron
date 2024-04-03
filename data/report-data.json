@@ -1,17 +1,26 @@
-[
-  {
-    "name": "John",
-    "age": 25,
-    "salary": 50000
-  },
-  {
-      "name": "Jane",
-      "age": 30,
-      "salary": 60000
-  },
-  {
-      "name": "Jim",
-      "age": 35,
-      "salary": 70000
-  }
-]
+{
+   "rows": [
+     {
+       "name": "John",
+       "age": 25,
+       "salary": 50000
+     },
+     {
+       "name": "Jane",
+       "age": 30,
+       "salary": 60000
+     },
+     {
+       "name": "Jim",
+       "age": 35,
+       "salary": 70000
+     }
+   ],
+   "params": {
+     "company_name": "ABCDFG Ltd",
+     "company_address": "1234 Elm St, Springfield, IL 62701",
+     "average_age": 30,
+     "average_salary": 60000
+   }
+}
+

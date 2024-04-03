@@ -1,4 +1,6 @@
-title: Employee Report
+title:
+  - header: $P{company_name} Employee Report
+    level: 1
 page_header:
 column_header:
   - name: Name
@@ -17,4 +19,6 @@ column_footer:
   - value: $P(average_salary)
 page_footer:
 summary:
-
+  - paragraph:
+    - text: "Company address: $P{company_address}"
+      size: 10
