@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use bytes::Bytes;
-use serde_yaml::Value;
+use serde_yaml::Value as YValue;
+use serde_json::Value as JValue;
+
 use thiserror::Error;
 
 pub struct Report;
@@ -8,8 +10,8 @@ pub struct Report;
 
 impl Report {
 
-    pub fn generate(template: &str, data: &str,  images: &HashMap<String, Bytes>) -> anyhow::Result<Bytes> {
-        let data: Value = serde_yaml::from_str(template)?;
+    pub fn generate(template: &str, data: &str,  _images: &HashMap<String, Bytes>) -> anyhow::Result<Bytes> {
+        let data: YValue = serde_yaml::from_str(template)?;
         let data1 = data.get("title").ok_or(ReportError::Common)?;
         println!("{:?}", data1);
         println!("{:?}", data1.as_sequence().ok_or(ReportError::Common)?.first());
