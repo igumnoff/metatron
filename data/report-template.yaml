@@ -2,6 +2,8 @@ title:
   - header: $P{company_name} Employee Report
     level: 1
 page_header:
+  - text: Confidential information
+    size: 7
 column_header:
   - name: Name
     width: 20
@@ -18,6 +20,8 @@ column_footer:
   - value: $P(average_age)
   - value: $P(average_salary)
 page_footer:
+  - text: "Tel: +1 123 456 789"
+    size: 7
 summary:
   - paragraph:
     - text: "Company address: $P{company_address}"
