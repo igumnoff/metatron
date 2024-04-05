@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use anyhow::anyhow;
 use bytes::Bytes;
 use serde_yaml::Value as YValue;
 use serde_json::Value as JValue;
@@ -50,11 +49,21 @@ impl Report {
             if let Some(data_rows) = data["rows"].as_array() {
                 for data_row in data_rows {
                     let mut cells = Vec::new();
-                    for column in columns {
-                        if let Some(field_name) = column["name"].as_str() {
-                            if let Some(value) = data_row[field_name].as_str() {
-                                let text_element = TextElement::new(value, 8)?; // Default font size for cells
-                                cells.push(TableCellElement::new(&text_element)?);
+                    // Use the `row` section from the YAML template instead of directly using column names
+                    if let Some(row_configs) = template["row"].as_sequence() {
+                        for row_config in row_configs {
+                            if let Some(value_key) = row_config["value"].as_str() {
+                                // Determine the field name to extract from the JSON data row based on the template configuration
+                                let field_name = value_key.trim_start_matches("$F(").trim_end_matches(")");
+                                if let Some(value) = data_row[field_name].as_str() {
+                                    let text_element = TextElement::new(value, 8)?; // Default font size for cells
+                                    cells.push(TableCellElement::new(&text_element)?);
+                                }
+                                if let Some(value) = data_row[field_name].as_number() {
+                                    let value = value.to_string();
+                                    let text_element = TextElement::new(value.as_str(), 8)?; // Default font size for cells
+                                    cells.push(TableCellElement::new(&text_element)?);
+                                }
                             }
                         }
                     }
@@ -68,7 +77,6 @@ impl Report {
 
 
         let document = Document::new(&elements)?;
-        println!("{:?}", document);
         Ok(document)
 
     }
@@ -86,6 +94,7 @@ pub enum ReportError {
 mod tests {
     use super::*;
     use std::collections::HashMap;
+    use shiva::core::TransformerTrait;
 
     #[test]
     fn test_generate() -> anyhow::Result<()> {
@@ -96,6 +105,12 @@ mod tests {
         let images = HashMap::new();
         let result = Report::generate(template, data, &images);
         assert!(result.is_ok());
+        let doc = result?;
+        println!("{:?}", doc);
+        println!("=========================");
+        let result = shiva::markdown::Transformer::generate(&doc)?;
+        let result_str = std::str::from_utf8(&result.0)?;
+        println!("{}", result_str);
         Ok(())
     }
 }
