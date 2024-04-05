@@ -46,7 +46,7 @@ summary:
       size: 10
 ```
 
-### report-data.yaml
+### report-data.json
 ```json
 {
    "rows": [
@@ -77,7 +77,7 @@ summary:
 ```
 
 
-### Generate report
+### Generated report
 
 ***
 
