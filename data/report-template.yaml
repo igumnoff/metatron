@@ -16,9 +16,9 @@ row:
   - value: $F(age)
   - value: $F(salary)
 column_footer:
-  - value:
-  - value: $P(average_age)
-  - value: $P(average_salary)
+  - value: "AVERAGE:"
+  - value: $P{average_age}
+  - value: $P{average_salary}
 page_footer:
   - text: "Tel: +1 123 456 789"
     size: 7

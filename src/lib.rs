@@ -15,14 +15,22 @@ impl Report {
     pub fn generate(template: &str, data: &str,  _images: &HashMap<String, Bytes>) -> anyhow::Result<Document> {
         let template: YValue = serde_yaml::from_str(template)?;
         let data: JValue = serde_json::from_str(data)?;
-        let params = data["params"].as_object().ok_or(Common("Missing 'params' in data".to_string()))?;
+        let params_src = data["params"].as_object().ok_or(Common("Missing 'params' in data".to_string()))?;
+        let params: HashMap<String, String> = params_src.iter().map(|(k, v)| {
+            let value:String = if v.is_number() {
+                v.to_string()
+            } else {
+                v.as_str().unwrap_or("").to_string()
+            };
+            (k.clone(), value)
+        }).collect();
         let mut elements: Vec<Box<dyn Element>> = vec![];
         if let Some(title) = template["title"].as_sequence() {
             for header in title {
                 if let Some(header_text) = header["header"].as_str() {
                     let mut resolved_text = header_text.to_string();
-                    for (key, value) in params {
-                        resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), value.as_str().unwrap_or(""));
+                    for (key, value) in &params {
+                        resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), &value);
                     }
                     let header_element = HeaderElement::new(&resolved_text, header["level"].as_u64().unwrap_or(1) as u8)?;
                     elements.push(header_element);
@@ -71,8 +79,43 @@ impl Report {
                 }
             }
 
-            let table_element = TableElement::new(&headers, &rows)?;
-            elements.push(table_element);
+
+            if let Some(footer_configs) = template["column_footer"].as_sequence() {
+                let mut footer_cells = Vec::new();
+                for footer_config in footer_configs {
+                    if let Some(value_key) = footer_config["value"].as_str() {
+                        // Replace placeholders with actual values
+                        let mut resolved_text = value_key.to_string();
+                        for (key, value) in &params {
+                            resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), &value);
+                        }
+
+                        // Handling empty values to maintain table structure
+                        if resolved_text.is_empty() {
+                            resolved_text = " ".to_string(); // Ensure empty cells are accounted for
+                        }
+
+                        let text_element = TextElement::new(&resolved_text, 8)?; // Assuming default font size for footer
+                        footer_cells.push(TableCellElement::new(&text_element)?);
+                    } else {
+                        // If there's no value specified, insert a placeholder or space
+                        let text_element = TextElement::new(" ", 8)?; // Ensure the table structure remains consistent
+                        footer_cells.push(TableCellElement::new(&text_element)?);
+                    }
+                }
+
+                // Create a footer row and add it to the rows
+                if !footer_cells.is_empty() {
+                    let footer_row = TableRowElement::new(&footer_cells)?;
+                    // Assuming you have a method to add a row to the table, or you can directly append it if `rows` is accessible here
+                    rows.push(footer_row);
+                }
+            }
+
+            let table_element_with_footer = TableElement::new(&headers, &rows)?;
+
+            elements.push(table_element_with_footer);
+
         }
 
 
