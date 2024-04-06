@@ -1,6 +1,6 @@
 # Metatron
 
-![Metatron](logo.png)
+![Metatron](https://github.com/igumnoff/metatron/raw/HEAD/logo.png)
 
 **Metatron library: Implementation in Rust of a report generation based on [Shiva library](https://github.com/igumnoff/shiva)**
 
