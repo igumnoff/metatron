@@ -1,3 +1,7 @@
+//!
+#![doc = include_str!("../README.md")]
+//!
+
 use std::collections::HashMap;
 use bytes::Bytes;
 use serde_yaml::Value as YValue;
@@ -6,6 +10,7 @@ use shiva::core::{Document, Element, HeaderElement, TableCellElement, TableEleme
 
 use thiserror::Error;
 use crate::ReportError::Common;
+
 
 pub struct Report;
 
