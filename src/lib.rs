@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use bytes::Bytes;
 use serde_yaml::Value as YValue;
 use serde_json::Value as JValue;
-use shiva::core::{Document, Element, HeaderElement, TableCellElement, TableElement, TableHeaderElement, TableRowElement, TextElement};
+use shiva::core::{Document, Element, HeaderElement, ParagraphElement, TableCellElement, TableElement, TableHeaderElement, TableRowElement, TextElement};
 
 use thiserror::Error;
 use crate::ReportError::Common;
@@ -121,6 +121,30 @@ impl Report {
 
             elements.push(table_element_with_footer);
 
+        }
+
+
+        if let Some(summary) = template["summary"].as_sequence() {
+            for paragraph_config in summary {
+                if let Some(paragraph_items) = paragraph_config["paragraph"].as_sequence() {
+                    let mut paragraph_elements: Vec<Box<dyn Element>> = vec![];
+                    for text_item in paragraph_items {
+                        if let Some(text_value) = text_item["text"].as_str() {
+                            let mut resolved_text = text_value.to_string();
+                            for (key, value) in &params {
+                                resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), value);
+                            }
+                            let text_size = text_item["size"].as_u64().unwrap_or(10) as u8; // Default size if not specified
+                            let text_element = TextElement::new(&resolved_text, text_size)?;
+                            paragraph_elements.push(text_element);
+                        }
+                    }
+                    if !paragraph_elements.is_empty() {
+                        let paragraph_element = ParagraphElement::new(&paragraph_elements)?;
+                        elements.push(paragraph_element);
+                    }
+                }
+            }
         }
 
 

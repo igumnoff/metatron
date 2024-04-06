@@ -11,6 +11,13 @@
 - HTML
 - PDF
 
+# Usage
+
+Cargo.toml
+```toml
+metatron = "0.1.2"
+```
+
 
 ## How it works
 
