@@ -2,7 +2,7 @@ title:
   - header: $P{company_name} Employee Report
     level: 1
 page_header:
-  - text: Confidential information
+  - text: "Confidential information\n\n"
     size: 7
 column_header:
   - name: Name

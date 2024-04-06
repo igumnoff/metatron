@@ -15,7 +15,7 @@
 
 Cargo.toml
 ```toml
-metatron = "0.1.2"
+metatron = "0.1.3"
 ```
 
 

@@ -30,6 +30,8 @@ impl Report {
             (k.clone(), value)
         }).collect();
         let mut elements: Vec<Box<dyn Element>> = vec![];
+        let mut page_header: Vec<Box<dyn Element>> = vec![];
+        let mut page_footer: Vec<Box<dyn Element>> = vec![];
         if let Some(title) = template["title"].as_sequence() {
             for header in title {
                 if let Some(header_text) = header["header"].as_str() {
@@ -124,6 +126,28 @@ impl Report {
         }
 
 
+        // Process page_header, if present in the template
+        if let Some(headers) = template["page_header"].as_sequence() {
+            for header in headers {
+                if let Some(header_text) = header["text"].as_str() {
+                    let text_size = header["size"].as_u64().unwrap_or(7) as u8; // Default size if not specified
+                    let text_element = TextElement::new(&header_text, text_size)?;
+                    page_header.push(text_element);
+                }
+            }
+        }
+
+        // Process page_footer, if present in the template
+        if let Some(footers) = template["page_footer"].as_sequence() {
+            for footer in footers {
+                if let Some(footer_text) = footer["text"].as_str() {
+                    let text_size = footer["size"].as_u64().unwrap_or(7) as u8; // Default size if not specified
+                    let text_element = TextElement::new(&footer_text, text_size)?;
+                    page_footer.push(text_element);
+                }
+            }
+        }
+
         if let Some(summary) = template["summary"].as_sequence() {
             for paragraph_config in summary {
                 if let Some(paragraph_items) = paragraph_config["paragraph"].as_sequence() {
@@ -148,7 +172,9 @@ impl Report {
         }
 
 
-        let document = Document::new(&elements)?;
+        let mut document = Document::new(&elements)?;
+        document.page_header = page_header;
+        document.page_footer = page_footer;
         Ok(document)
 
     }
