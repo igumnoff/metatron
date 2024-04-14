@@ -65,7 +65,7 @@ impl Report {
                     };
                     let width = column["width"].as_f64().unwrap_or(20.0) as f32;
                     let header_element = TableHeader {
-                        element: Box::new(text_element),
+                        element: text_element,
                         width: width,
                     };
                     headers.push(header_element);
@@ -87,7 +87,7 @@ impl Report {
                                         size: 8,
                                     };
                                     cells.push(TableCell {
-                                        element: Box::new(text_element),
+                                        element: text_element,
                                     });
                                 }
                                 if let Some(value) = data_row[field_name].as_number() {
@@ -97,7 +97,7 @@ impl Report {
                                         size: 8,
                                     }; // Default font size for cells
                                     cells.push(TableCell {
-                                        element: Box::from(text_element),
+                                        element: text_element,
                                     });
                                 }
                             }
@@ -124,7 +124,7 @@ impl Report {
                             size: 8,
                         };
                         footer_cells.push(TableCell {
-                            element: Box::new(text_element),
+                            element: text_element,
                         });
                     } else {
                         let text_element = Text {
@@ -132,7 +132,7 @@ impl Report {
                             size: 8,
                         };
                         footer_cells.push(TableCell {
-                            element: Box::from(text_element),
+                            element: text_element,
                         });
                     }
                 }
