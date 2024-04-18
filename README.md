@@ -15,6 +15,7 @@
 
 Cargo.toml
 ```toml
+[dependencies]
 metatron = "0.2.1"
 ```
 
@@ -27,7 +28,7 @@ fn main() {
     let images = HashMap::new();
     let doc = Report::generate(template, data, &images).unwrap();
     let result = shiva::pdf::Transformer::generate(&doc).unwrap();
-    std::fs::write("report.pdf",result.0)?;
+    std::fs::write("report.pdf",result.0).unwrap();
 }
 ```
 
