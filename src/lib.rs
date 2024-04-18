@@ -235,9 +235,9 @@ mod tests {
         let doc = result?;
         println!("{:?}", doc);
         println!("=========================");
-        let result = shiva::markdown::Transformer::generate(&doc)?;
-        let result_str = std::str::from_utf8(&result.0)?;
-        println!("{}", result_str);
+        let result = shiva::pdf::Transformer::generate(&doc)?;
+        std::fs::write("./data/report.pdf",result.0)?;
+
         Ok(())
     }
 }

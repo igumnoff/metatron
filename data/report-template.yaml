@@ -6,17 +6,17 @@ page_header:
     size: 7
 column_header:
   - name: Name
-    width: 20
+    width: 30
   - name: Age
-    width: 5
+    width: 10
   - name: Salary
-    width: 5
+    width: 20
 row:
   - value: $F(name)
   - value: $F(age)
   - value: $F(salary)
 column_footer:
-  - value: "AVERAGE:"
+  - value: "Average:"
   - value: $P{average_age}
   - value: $P{average_salary}
 page_footer:
