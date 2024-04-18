@@ -15,7 +15,20 @@
 
 Cargo.toml
 ```toml
-metatron = "0.1.3"
+metatron = "0.2.1"
+```
+
+```rust
+fn main() {
+    let template_vec = std::fs::read("report-template.yaml").unwrap();
+    let template = std::str::from_utf8(&template_vec).unwrap();
+    let data_vec = std::fs::read("report-data.json").unwrap();
+    let data = std::str::from_utf8(&data_vec).unwrap();
+    let images = HashMap::new();
+    let doc = Report::generate(template, data, &images).unwrap();
+    let result = shiva::pdf::Transformer::generate(&doc).unwrap();
+    std::fs::write("report.pdf",result.0)?;
+}
 ```
 
 
@@ -31,17 +44,17 @@ page_header:
     size: 7
 column_header:
   - name: Name
-    width: 20
+    width: 30
   - name: Age
-    width: 5
+    width: 10
   - name: Salary
-    width: 5
+    width: 20
 row:
   - value: $F(name)
   - value: $F(age)
   - value: $F(salary)
 column_footer:
-  - value: "AVERAGE:"
+  - value: "Average:"
   - value: $P{average_age}
   - value: $P{average_salary}
 page_footer:
@@ -86,20 +99,10 @@ summary:
 
 ### Generated report
 
-***
+![PDF](https://github.com/igumnoff/metatron/raw/HEAD/pdf.png)
 
-Confidential information
 
-# ABCDFG Ltd Employee Report
-
-| Name     | Age | Salary |
-|----------|-----|--------|
-| John     | 25  | 50000  |
-| Jane     | 30  | 60000  |
-| Jim      | 35  | 70000  |
-| AVERAGE: | 30  | 60000  |
-
-Company address: 1234 Elm St, Springfield, IL 62701
-
-Tel: +1 123 456 789
-
+# TODO
+- Add image support
+- CLI
+- Rest API server
