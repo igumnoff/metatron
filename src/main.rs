@@ -82,7 +82,7 @@ async fn generate_document(
             }
         }
     }
-    (StatusCode::CREATED, Json())
+    (StatusCode::CREATED, Json(response_object))
 }
 
 #[derive(Deserialize, Serialize)]
