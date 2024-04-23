@@ -1,37 +1,28 @@
 use std::collections::HashMap;
-use std::io::Bytes;
-use axum::{routing::{get, post}, http::StatusCode, Json, Router, response};
+use std::io;
+use std::io::Read;
+use axum::{routing::{get, post}, http::StatusCode, Json, Router, response, body::BodyDataStream};
+use axum::http::header;
+use axum::response::IntoResponse;
+use bytes::Bytes;
 use metatron::Report;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use shiva::core::{Document, TransformerTrait};
 use tokio::runtime;
+use tokio_util::io::ReaderStream;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
     let app = Router::new()
-        .route("/generate", post(generate_document));
+        .route("/generate", post(handler));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-fn handle_document_generation(
-    response_object: &mut CreateDocumentResponse,
-    document: anyhow::Result<(bytes::Bytes, HashMap<String, bytes::Bytes>)>
-){
-    if !document.is_ok() {
-        response_object.status.push_str("server error");
-    }
-    let document = document?;
-    response_object.report_file = document.0;
-}
-
-
-async fn generate_document(
-    Json(payload): Json<CreateDocument>,
-) -> (StatusCode, Json<CreateDocumentResponse>) {
+async fn handler(Json(payload): Json<CreateDocument>,) -> impl IntoResponse {
     let images = HashMap::new();
     let report = Report::generate(
         &payload.report_template,
@@ -39,49 +30,22 @@ async fn generate_document(
         &images
     );
 
-    let mut response_object = CreateDocumentResponse{
-        report_file: bytes::Bytes::new(),
-        status: String::new()
+    let file = match report {
+        Ok(file) => {file},
+        Err(err) => return Err((StatusCode::BAD_REQUEST, format!("File is corrupted: {}", err)))
     };
+    let stream = ReaderStream::new(file);
+    let body = BodyDataStream::new(stream);
 
-    let result = report.is_ok();
-    if !result {
-        response_object.status.push_str("document is possibly corrupted");
-        return (StatusCode::BAD_REQUEST, Json(response_object));
-    }
-    let generated_report = report?;
+    let headers = response::AppendHeaders([
+        (header::CONTENT_TYPE, "text/toml; charset=utf-8"),
+        (
+            header::CONTENT_DISPOSITION,
+            "attachment; filename=\"Cargo.toml\"",
+        ),
+    ]);
 
-    match payload.output_format {
-        DocumentFormats::Pdf => {
-            let result = shiva::pdf::Transformer::generate(&generated_report);
-            handle_document_generation(& mut response_object, result);
-            if response_object.status == "server error" {
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(response_object));
-            }
-        }
-        DocumentFormats::Text => {
-            let result = shiva::text::Transformer::generate(&generated_report);
-            handle_document_generation(& mut response_object, result);
-            if response_object.status == "server error" {
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(response_object));
-            }
-        }
-        DocumentFormats::Html => {
-            let result = shiva::html::Transformer::generate(&generated_report);
-            handle_document_generation(& mut response_object, result);
-            if response_object.status == "server error" {
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(response_object));
-            }
-        }
-        DocumentFormats::Markdown => {
-            let result = shiva::markdown::Transformer::generate(&generated_report);
-            handle_document_generation(& mut response_object, result);
-            if response_object.status == "server error" {
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(response_object));
-            }
-        }
-    }
-    (StatusCode::CREATED, Json(response_object))
+    Ok((headers, body))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -99,11 +63,6 @@ struct CreateDocument {
     pub output_format: DocumentFormats,
 }
 
-#[derive(Serialize)]
-struct CreateDocumentResponse {
-    pub report_file: bytes::Bytes,
-    pub status: String,
-}
 
 #[cfg(test)]
 mod tests{
