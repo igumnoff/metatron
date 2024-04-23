@@ -17,7 +17,6 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-
 fn handle_document_generation(
     response_object: &mut CreateDocumentResponse,
     document: anyhow::Result<(bytes::Bytes, HashMap<String, bytes::Bytes>)>
@@ -104,5 +103,10 @@ struct CreateDocument {
 struct CreateDocumentResponse {
     pub report_file: bytes::Bytes,
     pub status: String,
+}
+
+#[cfg(test)]
+mod tests{
+    use super::*;
 }
 
