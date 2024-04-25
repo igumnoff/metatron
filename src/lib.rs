@@ -217,12 +217,10 @@ mod tests {
 
     #[test]
     fn test_generate() -> anyhow::Result<()> {
-        let template_vec = std::fs::read("data/report-template.kdl")?;
-        let template = std::str::from_utf8(&template_vec).unwrap();
-        let data_vec = std::fs::read("data/report-data.json")?;
-        let data = std::str::from_utf8(&data_vec).unwrap();
+        let template = std::fs::read_to_string("data/report-template.kdl")?;
+        let data = std::fs::read_to_string("data/report-data.json")?;
         let images = HashMap::new();
-        let result = Report::generate(template, data, &images);
+        let result = Report::generate(&template, &data, &images);
         println!("{:?}", result);
         assert!(result.is_ok());
         let doc = result?;

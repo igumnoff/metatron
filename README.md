@@ -21,12 +21,10 @@ metatron = "0.3.0"
 
 ```rust
 fn main() {
-    let template_vec = std::fs::read("report-template.yaml").unwrap();
-    let template = std::str::from_utf8(&template_vec).unwrap();
-    let data_vec = std::fs::read("report-data.json").unwrap();
-    let data = std::str::from_utf8(&data_vec).unwrap();
+    let template = std::fs::read_to_string("report-template.yaml").unwrap();
+    let data = std::fs::read_to_string("report-data.json").unwrap();
     let images = HashMap::new();
-    let doc = Report::generate(template, data, &images).unwrap();
+    let doc = Report::generate(&template, &data, &images).unwrap();
     let result = shiva::pdf::Transformer::generate(&doc).unwrap();
     std::fs::write("report.pdf",result.0).unwrap();
 }
