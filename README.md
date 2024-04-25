@@ -16,7 +16,7 @@
 Cargo.toml
 ```toml
 [dependencies]
-metatron = "0.2.1"
+metatron = "0.3.0"
 ```
 
 ```rust
@@ -35,36 +35,39 @@ fn main() {
 
 ## How it works
 
-### report-template.yaml
-```yaml
-title:
-  - header: $P{company_name} Employee Report
-    level: 1
-page_header:
-  - text: Confidential information
-    size: 7
-column_header:
-  - name: Name
-    width: 30
-  - name: Age
-    width: 10
-  - name: Salary
-    width: 20
-row:
-  - value: $F(name)
-  - value: $F(age)
-  - value: $F(salary)
-column_footer:
-  - value: "Average:"
-  - value: $P{average_age}
-  - value: $P{average_salary}
-page_footer:
-  - text: "Tel: +1 123 456 789"
-    size: 7
-summary:
-  - paragraph:
-    - text: "Company address: $P{company_address}"
-      size: 10
+### report-template.kdl
+```kdl
+template {
+    title {
+        header level=1 "$P{company_name} Employee Report"
+    }
+    page_header {
+        text size=7 "Confidential information"
+    }
+    column_header {
+        column name="Name" width=30
+        column name="Age" width=10
+        column name="Salary" width=20
+    }
+    row {
+        value "$F(name)"
+        value "$F(age)"
+        value "$F(salary)"
+    }
+    column_footer {
+        value "Average:"
+        value "$P{average_age}"
+        value "$P{average_salary}"
+    }
+    page_footer {
+        text size=7 "Tel: +1 123 456 789"
+    }
+    summary {
+        paragraph {
+            text size=10 "Company address: $P{company_address}"
+        }
+    }
+}
 ```
 
 ### report-data.json
