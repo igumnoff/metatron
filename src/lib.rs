@@ -228,6 +228,8 @@ mod tests {
         println!("=========================");
         let result = shiva::pdf::Transformer::generate(&doc)?;
         std::fs::write("./data/report.pdf",result.0)?;
+        let result = shiva::html::Transformer::generate(&doc)?;
+        std::fs::write("./data/report.html",result.0)?;
 
         Ok(())
     }
