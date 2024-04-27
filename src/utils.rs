@@ -1,84 +1,40 @@
+use bytes::Bytes;
 use shiva::core::{Document, TransformerTrait, DocumentType};
-use shiva::core::DocumentType::{Html, Json, Markdown, Pdf};
-
-
-pub trait DocumentSerialization{
-    fn document_to_u8arr(document: &Document) -> &[u8];
-}
-
-pub trait BinarySerializable{
-    fn to_u8arr(&self, document_type: DocumentType) -> &[u8];
-}
-
-pub struct Text;
-pub struct PDF;
-pub struct HTML;
-pub struct MarkDown;
-pub struct JSON;
-
-impl DocumentSerialization for Text{
-    fn document_to_u8arr(document: &Document) -> &[u8]{
-        let binary_as_bytes = shiva::text::Transformer::generate(document).unwrap().0;
-        let serialized: &[u8] = binary_as_bytes.iter().as_slice();
-        return serialized;
+use shiva::core::DocumentType::{Html, Json, Markdown, Pdf, Text};
+fn to_u8arr(document: &Document, document_type: DocumentType) -> Bytes {
+    match document_type {
+        Html => {
+            shiva::html::Transformer::generate(document).unwrap().0
+        }
+        Markdown => {
+            shiva::markdown::Transformer::generate(document).unwrap().0
+        }
+        Text => {
+            shiva::text::Transformer::generate(document).unwrap().0
+        }
+        Pdf => {
+            shiva::pdf::Transformer::generate(document).unwrap().0
+        }
+        Json => {
+            shiva::json::Transformer::generate(document).unwrap().0
+        }
     }
-}
 
-impl DocumentSerialization for PDF{
-    fn document_to_u8arr(document: &Document) -> &[u8]{
-        let binary_as_bytes = shiva::pdf::Transformer::generate(document).unwrap().0;
-        let serialized: &[u8] = binary_as_bytes.iter().as_slice();
-        return serialized;
-    }
 }
+mod tests {
+    use super::*;
+    use shiva::core::Element;
+    use bytes::Bytes;
+    use shiva::core::DocumentType::{Html, Json, Markdown, Pdf, Text};
+    use shiva::core::Element::Paragraph;
 
-impl DocumentSerialization for HTML{
-    fn document_to_u8arr(document: &Document) -> &[u8]{
-        let binary_as_bytes = shiva::html::Transformer::generate(document).unwrap().0;
-        let serialized: &[u8] = binary_as_bytes.iter().as_slice();
-        return serialized;
-    }
-}
-
-impl DocumentSerialization for MarkDown{
-    fn document_to_u8arr(document: &Document) -> &[u8]{
-        let binary_as_bytes = shiva::markdown::Transformer::generate(document).unwrap().0;
-        let serialized: &[u8] = binary_as_bytes.iter().as_slice();
-        return serialized;
-    }
-}
-
-impl DocumentSerialization for JSON{
-    fn document_to_u8arr(document: &Document) -> &[u8]{
-        let binary_as_bytes = shiva::json::Transformer::generate(document).unwrap().0;
-        let serialized: &[u8] = binary_as_bytes.iter().as_slice();
-        return serialized;
-    }
-}
-
-enum DocumentSerializationType{
-    Text(Text),
-    PDF(PDF),
-    HTML(HTML),
-    MarkDown(MarkDown),
-    JSON(JSON),
-}
-
-pub fn shiva_enum_doc_type_to_metatron_doc_type(document_type: DocumentType) -> DocumentSerializationType {
-    let document_serializator: dyn DocumentSerialization = match document_type {
-        Html => {HTML},
-        Markdown => {MarkDown},
-        Text => {Text},
-        Pdf => {PDF},
-        Json => {JSON},
-    };
-    return document_serializator;
-}
-
-impl BinarySerializable for Document{
-    fn to_u8arr(&self, document_type: DocumentType) -> &[u8]{
-        let document_serializator= shiva_enum_doc_type_to_metatron_doc_type(document_type);
-        let serialized_document = document_serializator.to_u8arr(self);
-        return serialized_document;
+    #[test]
+    fn test_to_u8arr() {
+        let elements = vec![Element::Text { text: "Hello, World!".to_string(), size: 8 }];
+        let paragraph = Paragraph { elements };
+        let document = Document::new(vec![paragraph]);
+        let document_type = Html;
+        let result = to_u8arr(&document, document_type);
+        let _serialized: &[u8] = result.iter().as_slice();
     }
 }
