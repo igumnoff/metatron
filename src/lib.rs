@@ -2,6 +2,8 @@
 // #![doc = include_str!("../README.md")]
 //!
 
+mod utils;
+
 use bytes::Bytes;
 use serde_json::Value as JValue;
 use shiva::core::Element::{Header, Paragraph, Table, Text};
