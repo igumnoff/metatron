@@ -1,0 +1,31 @@
+template {
+    title {
+        header level=1 "$P{company_name} Employee Report"
+    }
+    page_header {
+        text size=7 "Confidential information\n\n"
+    }
+    column_header {
+        column name="Name" width=30
+        column name="Age" width=10
+        column name="Salary" width=20
+    }
+    row {
+        value "$F(name)"
+        value "$F(age)"
+        value "$F(salary)"
+    }
+    column_footer {
+        value "Average:"
+        value "$P{average_age}"
+        value "$P{average_salary}"
+    }
+    page_footer {
+        text size=7 "Tel: +1 123 456 789"
+    }
+    summary {
+        paragraph {
+            text size=10 "Company address: $P{company_address}"
+        }
+    }
+}

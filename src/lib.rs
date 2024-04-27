@@ -4,10 +4,10 @@
 
 use bytes::Bytes;
 use serde_json::Value as JValue;
-use serde_yaml::Value as YValue;
 use shiva::core::Element::{Header, Paragraph, Table, Text};
 use shiva::core::{Document, Element, TableCell, TableHeader, TableRow};
 use std::collections::HashMap;
+use kdl::KdlDocument;
 
 use crate::ReportError::Common;
 use thiserror::Error;
@@ -16,11 +16,14 @@ pub struct Report;
 
 impl Report {
     pub fn generate(
-        template: &str,
+        template_str: &str,
         data: &str,
         _images: &HashMap<String, Bytes>,
     ) -> anyhow::Result<Document> {
-        let template: YValue = serde_yaml::from_str(template)?;
+        let doc: KdlDocument = template_str.parse()?;
+        let template_elements = doc.get("template").ok_or(Common("Missing 'template'".to_string()))?.children().ok_or(Common("Empty 'template'".to_string()))?;
+        let title_elements = template_elements.get("title").ok_or(Common("'title' absent".to_string()))?.children().ok_or(Common("Empty 'title'".to_string()))?;
+
         let data: JValue = serde_json::from_str(data)?;
         let params_src = data["params"]
             .as_object()
@@ -39,170 +42,159 @@ impl Report {
         let mut elements: Vec<Element> = vec![];
         let mut page_header: Vec<Element> = vec![];
         let mut page_footer: Vec<Element> = vec![];
-        if let Some(title) = template["title"].as_sequence() {
-            for header in title {
-                if let Some(header_text) = header["header"].as_str() {
-                    let mut resolved_text = header_text.to_string();
-                    for (key, value) in &params {
-                        resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), &value);
+
+        let header_text = title_elements.get_args("header").get(0).ok_or(Common("Missing text".to_string()))?.as_string().ok_or(Common("Invalid text".to_string()))?;
+        let header_level = title_elements.get("header").ok_or(Common("Missing 'header'".to_string()))?
+            .get("level").ok_or(Common("Missing 'level'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'level'".to_string()))?;
+        let mut resolved_text = header_text.to_string();
+        for (key, value) in &params {
+            resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), &value);
+        }
+        let header_element = Header {
+            text: resolved_text,
+            level: header_level as u8,
+        };
+        elements.push(header_element);
+
+        // println!("{:?}", elements);
+
+        let column_header_children = template_elements.get("column_header").ok_or(Common("Missing 'column_header'".to_string()))?.children().ok_or(Common("Empty 'column_header'".to_string()))?;
+        let columns = column_header_children.nodes();
+        let mut headers = Vec::new();
+        for column in columns {
+            let name = column.get("name").ok_or(Common("Missing 'name'".to_string()))?.value().as_string().ok_or(Common("Invalid 'name'".to_string()))?;
+            let width_str = column.get("width").ok_or(Common("Missing 'width'".to_string()))?.value().to_string();
+            let width = width_str.parse::<f32>()?;
+            let text_element = Text {
+                text: name.to_string(),
+                size: 8,
+            };
+            let header_element = TableHeader {
+                element: text_element,
+                width: width,
+            };
+            headers.push(header_element);
+
+
+
+
+        }
+
+        let row_configs = template_elements.get("row").ok_or(Common("Missing 'row'".to_string()))?.children().ok_or(Common("Empty 'row'".to_string()))?.nodes();
+
+        let mut rows = Vec::new();
+        if let Some(data_rows) = data["rows"].as_array() {
+            for data_row in data_rows {
+                let mut cells = Vec::new();
+                    for row in row_configs {
+                        let value_key = row.entries().get(0).ok_or(Common("Missing 'value'".to_string()))?.value().as_string().ok_or(Common("Invalid 'value'".to_string()))?;
+                            let field_name =
+                                value_key.trim_start_matches("$F(").trim_end_matches(")");
+                            if let Some(value) = data_row[field_name].as_str() {
+                                let text_element = Text {
+                                    text: value.to_string(),
+                                    size: 8,
+                                };
+                                cells.push(TableCell {
+                                    element: text_element,
+                                });
+                            }
+                            if let Some(value) = data_row[field_name].as_number() {
+                                let value = value.to_string();
+                                let text_element = Text {
+                                    text: value,
+                                    size: 8,
+                                }; // Default font size for cells
+                                cells.push(TableCell {
+                                    element: text_element,
+                                });
+                            }
                     }
-                    let header_element = Header {
-                        text: resolved_text,
-                        level: header["level"].as_u64().unwrap_or(1) as u8,
-                    };
-                    elements.push(header_element);
-                }
+                rows.push(TableRow { cells });
             }
         }
 
-        if let Some(columns) = template["column_header"].as_sequence() {
-            let mut headers = Vec::new();
-            for column in columns {
-                if let Some(name) = column["name"].as_str() {
+        let footer_configs = template_elements.get("column_footer").ok_or(Common("Missing 'column_footer'".to_string()))?.children().ok_or(Common("Empty 'column_footer'".to_string()))?.nodes();
+            let mut footer_cells = Vec::new();
+            for footer_config in footer_configs {
+                let value_key = footer_config.entries().get(0).ok_or(Common("Missing 'value'".to_string()))?.value().as_string().ok_or(Common("Invalid 'value'".to_string()))?;
+                    let mut resolved_text = value_key.to_string();
+                    for (key, value) in &params {
+                        resolved_text =
+                            resolved_text.replace(&format!("$P{{{}}}", key), &value);
+                    }
+                    if resolved_text.is_empty() {
+                        resolved_text = " ".to_string();
+                    }
                     let text_element = Text {
-                        text: name.to_string(),
+                        text: resolved_text,
                         size: 8,
                     };
-                    let width = column["width"].as_f64().unwrap_or(20.0) as f32;
-                    let header_element = TableHeader {
+                    footer_cells.push(TableCell {
                         element: text_element,
-                        width: width,
-                    };
-                    headers.push(header_element);
-                }
+                    });
+            }
+            if !footer_cells.is_empty() {
+                let footer_row = TableRow {
+                    cells: footer_cells,
+                };
+                rows.push(footer_row);
             }
 
-            let mut rows = Vec::new();
-            if let Some(data_rows) = data["rows"].as_array() {
-                for data_row in data_rows {
-                    let mut cells = Vec::new();
-                    if let Some(row_configs) = template["row"].as_sequence() {
-                        for row_config in row_configs {
-                            if let Some(value_key) = row_config["value"].as_str() {
-                                let field_name =
-                                    value_key.trim_start_matches("$F(").trim_end_matches(")");
-                                if let Some(value) = data_row[field_name].as_str() {
-                                    let text_element = Text {
-                                        text: value.to_string(),
-                                        size: 8,
-                                    };
-                                    cells.push(TableCell {
-                                        element: text_element,
-                                    });
-                                }
-                                if let Some(value) = data_row[field_name].as_number() {
-                                    let value = value.to_string();
-                                    let text_element = Text {
-                                        text: value,
-                                        size: 8,
-                                    }; // Default font size for cells
-                                    cells.push(TableCell {
-                                        element: text_element,
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    rows.push(TableRow { cells });
-                }
-            }
 
-            if let Some(footer_configs) = template["column_footer"].as_sequence() {
-                let mut footer_cells = Vec::new();
-                for footer_config in footer_configs {
-                    if let Some(value_key) = footer_config["value"].as_str() {
-                        let mut resolved_text = value_key.to_string();
-                        for (key, value) in &params {
-                            resolved_text =
-                                resolved_text.replace(&format!("$P{{{}}}", key), &value);
-                        }
-                        if resolved_text.is_empty() {
-                            resolved_text = " ".to_string();
-                        }
-                        let text_element = Text {
-                            text: resolved_text,
-                            size: 8,
-                        };
-                        footer_cells.push(TableCell {
-                            element: text_element,
-                        });
-                    } else {
-                        let text_element = Text {
-                            text: " ".to_string(),
-                            size: 8,
-                        };
-                        footer_cells.push(TableCell {
-                            element: text_element,
-                        });
-                    }
-                }
-                if !footer_cells.is_empty() {
-                    let footer_row = TableRow {
-                        cells: footer_cells,
-                    };
-                    rows.push(footer_row);
-                }
-            }
+        let table_element_with_footer = Table { headers, rows };
 
-            let table_element_with_footer = Table { headers, rows };
+        // println!("{:?}", table_element_with_footer);
+        elements.push(table_element_with_footer);
 
-            elements.push(table_element_with_footer);
+
+        // println!("{:?}", rows);
+        let header = template_elements.get("page_header").ok_or(Common("Missing 'page_header'".to_string()))?.children().ok_or(Common("Empty 'page_header'".to_string()))?;
+        // println!("{:?}", header);
+        let header_text = header.get_args("text").get(0).ok_or(Common("Missing text".to_string()))?.as_string().ok_or(Common("Invalid text".to_string()))?;
+        let text_size = header.get("text").ok_or(Common("Missing 'header'".to_string()))?
+            .get("size").ok_or(Common("Missing 'size'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'size'".to_string()))?;
+        let text_element = Text {
+                text: header_text.to_string(),
+                size: text_size as u8,
+            };
+        page_header.push(text_element);
+        // println!("{:?}", page_header);
+
+        let footer = template_elements.get("page_footer").ok_or(Common("Missing 'page_footer'".to_string()))?.children().ok_or(Common("Empty 'page_footer'".to_string()))?;
+        // println!("{:?}", footer);
+        let footer_text = footer.get_args("text").get(0).ok_or(Common("Missing text".to_string()))?.as_string().ok_or(Common("Invalid text".to_string()))?;
+        let text_size = footer.get("text").ok_or(Common("Missing 'footer'".to_string()))?
+            .get("size").ok_or(Common("Missing 'size'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'size'".to_string()))?;
+        let text_element = Text {
+                text: footer_text.to_string(),
+                size: text_size as u8,
+            };
+        page_footer.push(text_element);
+        // println!("{:?}", page_footer);
+
+        let summary = template_elements.get("summary").ok_or(Common("Missing 'summary'".to_string()))?.children().ok_or(Common("Empty 'summary'".to_string()))?;
+                // println!("{:?}", paragraph_config);
+        let  paragraph = summary.get("paragraph").ok_or(Common("Missing 'paragraph'".to_string()))?;
+        let  text_element = paragraph.children().ok_or(Common("Missing children".to_string()))?.get("text").ok_or(Common("Missing 'text'".to_string()))?;
+        let  size = text_element.get("size").ok_or(Common("Missing 'size'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'size'".to_string()))?;
+        let  text = paragraph.children().ok_or(Common("Missing children".to_string()))?.get_args("text").get(0).ok_or(Common("Missing text".to_string()))?.as_string().ok_or(Common("Invalid text".to_string()))?;
+
+        let mut resolved_text = text.to_string();
+        for (key, value) in &params {
+            resolved_text =
+                resolved_text.replace(&format!("$P{{{}}}", key), value);
         }
+        let text_element = Text {
+            text: resolved_text,
+            size: size as u8,
+        };
+        let paragraph_element = Paragraph {
+            elements: vec![text_element],
+        };
+        elements.push(paragraph_element);
 
-        if let Some(headers) = template["page_header"].as_sequence() {
-            for header in headers {
-                if let Some(header_text) = header["text"].as_str() {
-                    let text_size = header["size"].as_u64().unwrap_or(7) as u8; // Default size if not specified
-                    let text_element = Text {
-                        text: header_text.to_string(),
-                        size: text_size,
-                    };
-                    page_header.push(text_element);
-                }
-            }
-        }
 
-        if let Some(footers) = template["page_footer"].as_sequence() {
-            for footer in footers {
-                if let Some(footer_text) = footer["text"].as_str() {
-                    let text_size = footer["size"].as_u64().unwrap_or(7) as u8; // Default size if not specified
-                    let text_element = Text {
-                        text: footer_text.to_string(),
-                        size: text_size,
-                    };
-                    page_footer.push(text_element);
-                }
-            }
-        }
-
-        if let Some(summary) = template["summary"].as_sequence() {
-            for paragraph_config in summary {
-                if let Some(paragraph_items) = paragraph_config["paragraph"].as_sequence() {
-                    let mut paragraph_elements: Vec<Element> = vec![];
-                    for text_item in paragraph_items {
-                        if let Some(text_value) = text_item["text"].as_str() {
-                            let mut resolved_text = text_value.to_string();
-                            for (key, value) in &params {
-                                resolved_text =
-                                    resolved_text.replace(&format!("$P{{{}}}", key), value);
-                            }
-                            let text_size = text_item["size"].as_u64().unwrap_or(10) as u8; // Default size if not specified
-                            let text_element = Text {
-                                text: resolved_text,
-                                size: text_size,
-                            };
-                            paragraph_elements.push(text_element);
-                        }
-                    }
-                    if !paragraph_elements.is_empty() {
-                        let paragraph_element = Paragraph {
-                            elements: paragraph_elements,
-                        };
-                        elements.push(paragraph_element);
-                    }
-                }
-            }
-        }
 
         let mut document = Document::new(elements);
         document.page_header = page_header;
@@ -225,18 +217,19 @@ mod tests {
 
     #[test]
     fn test_generate() -> anyhow::Result<()> {
-        let template_vec = std::fs::read("data/report-template.yaml")?;
-        let template = std::str::from_utf8(&template_vec).unwrap();
-        let data_vec = std::fs::read("data/report-data.json")?;
-        let data = std::str::from_utf8(&data_vec).unwrap();
+        let template = std::fs::read_to_string("data/report-template.kdl")?;
+        let data = std::fs::read_to_string("data/report-data.json")?;
         let images = HashMap::new();
-        let result = Report::generate(template, data, &images);
+        let result = Report::generate(&template, &data, &images);
+        println!("{:?}", result);
         assert!(result.is_ok());
         let doc = result?;
         println!("{:?}", doc);
         println!("=========================");
         let result = shiva::pdf::Transformer::generate(&doc)?;
         std::fs::write("./data/report.pdf",result.0)?;
+        let result = shiva::html::Transformer::generate(&doc)?;
+        std::fs::write("./data/report.html",result.0)?;
 
         Ok(())
     }
