@@ -108,3 +108,11 @@ template {
 - Add image support
 - CLI
 - Rest API server
+
+## Contributing
+I would love to see contributions from the community. If you experience bugs, feel free to open an issue. If you would like to implement a new feature or bug fix, please follow the steps:
+1. Contact with me via telegram: @ievkz
+2. Confirm e-mail invitation in repository
+3. Do "git clone"
+4. Create branch with your assigned issue
+5. Create pull request to main branch
