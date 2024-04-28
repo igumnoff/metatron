@@ -1,9 +1,15 @@
+mod utils;
+use utils::to_u8arr;
+
 use std::collections::HashMap;
 use std::io;
+use mime;
 use std::io::Read;
-use axum::{routing::{get, post}, http::StatusCode, Json, Router, response, body::BodyDataStream};
+use std::sync::Arc;
+use axum::{routing::{get, post}, http::StatusCode, Json, Router, response, body::HttpBody};
+use axum::body::{Body, BodyDataStream};
 use axum::http::header;
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
 use bytes::Bytes;
 use metatron::Report;
 use serde::{Deserialize, Serialize, Serializer};
@@ -11,6 +17,8 @@ use shiva::core::{Document, DocumentType, TransformerTrait};
 use tokio::io::ReadBuf;
 use tokio::runtime;
 use tokio_util::io::ReaderStream;
+
+
 
 #[tokio::main]
 async fn main() {
@@ -23,7 +31,8 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler(Json(payload): Json<CreateDocument>,) -> impl IntoResponse {
+
+async fn handler(Json(payload): Json<CreateDocument>) -> impl IntoResponse{
     let images = HashMap::new();
     let report = Report::generate(
         &payload.report_template,
@@ -35,9 +44,14 @@ async fn handler(Json(payload): Json<CreateDocument>,) -> impl IntoResponse {
         Ok(file) => {file},
         Err(err) => return Err((StatusCode::BAD_REQUEST, format!("File is corrupted: {}", err)))
     };
-    let document_as_bytes = file.to_u8arr(payload.output_format).unwrap();
-    let stream = ReaderStream::new(document_as_bytes);
-    let body = BodyDataStream::new(stream);
+
+    let document: &'static Bytes = &to_u8arr(&file, payload.output_format);
+    // https://habr.com/ru/articles/499108/
+    let document_iter = document.into_iter();
+    let document_as_bytes: Vec<_> = document_iter.collect();
+    let as_vector = document_as_bytes.as_slice();
+    let stream = ReaderStream::new(as_vector);
+    let body = Body::from_stream(stream);
 
     let headers = response::AppendHeaders([
         (header::CONTENT_TYPE, "text/toml; charset=utf-8"),
@@ -47,7 +61,15 @@ async fn handler(Json(payload): Json<CreateDocument>,) -> impl IntoResponse {
         ),
     ]);
 
-    Ok((headers, body))
+    let response = Response::builder()
+        .header("Content-Encoding", "gzip")
+        .header("Content-Type", mime::PDF.as_str())
+        .header("Cache-Control", "public, max-age=31536000")
+        .status(StatusCode::OK)
+        .body(body)
+        .unwrap();
+
+    return Ok(response);
 }
 
 

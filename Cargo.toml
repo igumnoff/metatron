@@ -28,6 +28,8 @@ serde = { version = "1.0.198", features = ["derive"] }
 tokio = { version = "1.37.0", features = ["rt-multi-thread"]}
 tracing-subscriber = "0.3.18"
 tokio-util = { version = "0.7.10", features = ["io"] }
+http = "1.1.0"
+mime = "0.3.17"
 
 [dev-dependencies]
 env_logger = "0.10.0"

@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use shiva::core::{Document, TransformerTrait, DocumentType};
 use shiva::core::DocumentType::{Html, Json, Markdown, Pdf, Text};
-fn to_u8arr(document: &Document, document_type: DocumentType) -> Bytes {
+pub fn to_u8arr(document: &Document, document_type: DocumentType) -> Bytes {
     match document_type {
         Html => {
             shiva::html::Transformer::generate(document).unwrap().0
