@@ -209,6 +209,12 @@ pub enum ReportError {
     Common(String),
 }
 
+
+// this function return string with json data like in report-data.json file
+fn from_mysql(connection_url: &str, table_name: &str, columns_name: &[&str]) -> Result<String, ReportError> {
+    todo!()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
