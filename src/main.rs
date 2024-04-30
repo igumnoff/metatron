@@ -10,6 +10,7 @@ use axum::{routing::{get, post}, http::StatusCode, Json, Router, response, body:
 use axum::body::{Body, BodyDataStream};
 use axum::http::header;
 use axum::response::{IntoResponse, Response};
+use bytes::buf::Reader;
 use bytes::Bytes;
 use metatron::Report;
 use serde::{Deserialize, Serialize, Serializer};
@@ -17,7 +18,6 @@ use shiva::core::{Document, DocumentType, TransformerTrait};
 use tokio::io::ReadBuf;
 use tokio::runtime;
 use tokio_util::io::ReaderStream;
-
 
 
 #[tokio::main]
@@ -45,12 +45,11 @@ async fn handler(Json(payload): Json<CreateDocument>) -> impl IntoResponse{
         Err(err) => return Err((StatusCode::BAD_REQUEST, format!("File is corrupted: {}", err)))
     };
 
-    let document: &'static Bytes = &to_u8arr(&file, payload.output_format);
+    let document: Bytes = to_u8arr(&file, payload.output_format);
     // https://habr.com/ru/articles/499108/
-    let document_iter = document.into_iter();
-    let document_as_bytes: Vec<_> = document_iter.collect();
-    let as_vector = document_as_bytes.as_slice();
-    let stream = ReaderStream::new(as_vector);
+    let bytes_vec = document.to_vec().to_owned();
+    let as_slice = bytes_vec.as_slice();
+    let stream = ReaderStream::new(as_slice);
     let body = Body::from_stream(stream);
 
     let headers = response::AppendHeaders([
