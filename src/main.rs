@@ -46,11 +46,7 @@ async fn handler(Json(payload): Json<CreateDocument>) -> impl IntoResponse{
     };
 
     let document: Bytes = to_u8arr(&file, payload.output_format);
-    // https://habr.com/ru/articles/499108/
-    let bytes_vec = document.to_vec().to_owned();
-    let as_slice = bytes_vec.as_slice();
-    let stream = ReaderStream::new(as_slice);
-    let body = Body::from_stream(stream);
+    let body = Body::from(document);
 
     let headers = response::AppendHeaders([
         (header::CONTENT_TYPE, "text/toml; charset=utf-8"),
