@@ -1,24 +1,25 @@
-mod utils;
-use utils::to_u8arr;
-
 use std::collections::HashMap;
 use std::io;
-use mime;
 use std::io::Read;
 use std::sync::Arc;
-use axum::{routing::{get, post}, http::StatusCode, Json, Router, response, body::HttpBody};
+
+use axum::{body::HttpBody, http::StatusCode, Json, response, Router, routing::{get, post}};
 use axum::body::{Body, BodyDataStream};
 use axum::http::header;
 use axum::response::{IntoResponse, Response};
 use bytes::buf::Reader;
 use bytes::Bytes;
-use metatron::Report;
+use mime;
 use serde::{Deserialize, Serialize, Serializer};
 use shiva::core::{Document, DocumentType, TransformerTrait};
 use tokio::io::ReadBuf;
 use tokio::runtime;
 use tokio_util::io::ReaderStream;
 
+use metatron::Report;
+use utils::to_u8arr;
+
+mod utils;
 
 #[tokio::main]
 async fn main() {
@@ -42,19 +43,11 @@ async fn handler(Json(payload): Json<CreateDocument>) -> impl IntoResponse{
 
     let file = match report {
         Ok(file) => {file},
-        Err(err) => return Err((StatusCode::BAD_REQUEST, format!("File is corrupted: {}", err)))
+        Err(err) => return Err((StatusCode::NOT_ACCEPTABLE, format!("File is corrupted: {}", err)))
     };
 
     let document: Bytes = to_u8arr(&file, payload.output_format);
     let body = Body::from(document);
-
-    let headers = response::AppendHeaders([
-        (header::CONTENT_TYPE, "text/toml; charset=utf-8"),
-        (
-            header::CONTENT_DISPOSITION,
-            "attachment; filename=\"file.txt\"",
-        ),
-    ]);
 
     let response = Response::builder()
         .header("Content-Encoding", "gzip")
@@ -78,6 +71,33 @@ struct CreateDocument {
 
 #[cfg(test)]
 mod tests{
+    use axum_test::TestServer;
+    use http::{HeaderValue, Request};
+    use http::StatusCode;
+    use serde_json::json;
+    use tokio;
+    use std::env;
+
     use super::*;
+
+    #[tokio::test]
+    async fn test_handler(){
+        let curdir = env::current_dir().unwrap().into_os_string();
+        let report_template = format!("{}/data/report-template.kdl", curdir.clone().into_string().unwrap());
+        let report_data = format!("{}/data/report-data.json", curdir.into_string().unwrap());
+        let app = Router::new().route("/generate", post(handler));
+        let mut srv = TestServer::new(app);
+
+        let payload = json!({
+            "report_template": std::fs::read_to_string(report_template).unwrap(),
+            "report_data": std::fs::read_to_string(report_data).unwrap(),
+            "output_format": "Pdf"
+        });
+
+        let res = srv.unwrap().post("/generate")
+            .add_header(header::CONTENT_TYPE, HeaderValue::from_static("application/json"))
+            .json(&payload).await;
+        assert_eq!(res.status_code(), StatusCode::OK);
+    }
 }
 
