@@ -1,6 +1,8 @@
 //!
-#![doc = include_str!("../README.md")]
+// #![doc = include_str!("../README.md")]
 //!
+
+mod utils;
 
 use bytes::Bytes;
 use serde_json::Value as JValue;

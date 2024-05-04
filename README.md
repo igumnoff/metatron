@@ -21,7 +21,7 @@ metatron = "0.3.3"
 
 ```rust
 fn main() {
-    let template = std::fs::read_to_string("report-template.yaml").unwrap();
+    let template = std::fs::read_to_string("report-template.kdl").unwrap();
     let data = std::fs::read_to_string("report-data.json").unwrap();
     let images = HashMap::new();
     let doc = Report::generate(&template, &data, &images).unwrap();
