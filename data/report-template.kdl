@@ -1,9 +1,10 @@
 template {
     title {
+        image src="data/logo.png" width=100 height=100
         header level=1 "$P{company_name} Employee Report"
     }
     page_header {
-        text size=7 "Confidential information\n\n"
+        text size=7 "Confidential information"
     }
     column_header {
         column name="Name" width=30

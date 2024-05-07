@@ -1,5 +1,5 @@
 //!
-// #![doc = include_str!("../README.md")]
+#![doc = include_str!("../README.md")]
 //!
 
 mod utils;
@@ -7,7 +7,7 @@ mod utils;
 use bytes::Bytes;
 use serde_json::Value as JValue;
 use shiva::core::Element::{Header, Paragraph, Table, Text};
-use shiva::core::{Document, Element, TableCell, TableHeader, TableRow};
+use shiva::core::{Document, Element, ImageType, TableCell, TableHeader, TableRow};
 use std::collections::HashMap;
 use kdl::KdlDocument;
 
@@ -45,20 +45,45 @@ impl Report {
         let mut page_header: Vec<Element> = vec![];
         let mut page_footer: Vec<Element> = vec![];
 
-        let header_text = title_elements.get_args("header").get(0).ok_or(Common("Missing text".to_string()))?.as_string().ok_or(Common("Invalid text".to_string()))?;
-        let header_level = title_elements.get("header").ok_or(Common("Missing 'header'".to_string()))?
-            .get("level").ok_or(Common("Missing 'level'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'level'".to_string()))?;
-        let mut resolved_text = header_text.to_string();
-        for (key, value) in &params {
-            resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), &value);
-        }
-        let header_element = Header {
-            text: resolved_text,
-            level: header_level as u8,
-        };
-        elements.push(header_element);
 
-        // println!("{:?}", elements);
+        let nodes = title_elements.nodes();
+        for node in nodes {
+            let name = node.name().to_string();
+            if name == "header" {
+                let header_level = node.get("level").ok_or(Common("Missing 'level'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'level'".to_string()))?;
+                let entries = node.entries();
+                for entry in entries {
+                    if entry.name().is_none() {
+                        let header_text = entry.value().as_string().ok_or(Common("Invalid text".to_string()))?;
+                        let mut resolved_text = header_text.to_string();
+                        for (key, value) in &params {
+                            resolved_text = resolved_text.replace(&format!("$P{{{}}}", key), &value);
+                        }
+                        let header_element = Header {
+                            text: resolved_text,
+                            level: header_level as u8,
+                        };
+                        elements.push(header_element);
+
+                    }
+                }
+            }
+            if name == "image" {
+                let src = node.get("src").ok_or(Common("Missing 'src'".to_string()))?.value().as_string().ok_or(Common("Invalid 'src'".to_string()))?;
+                let _width = node.get("width").ok_or(Common("Missing 'width'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'width'".to_string()))?;
+                let _height = node.get("height").ok_or(Common("Missing 'height'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'height'".to_string()))?;
+                let image_bytes = std::fs::read(src)?;
+                let image_bytes = Bytes::from(image_bytes);
+
+                let image_element = Element::Image {
+                    bytes: image_bytes,
+                    title: "".to_string(),
+                    alt: "".to_string(),
+                    image_type: ImageType::Png,
+                };
+                elements.push(image_element);
+            }
+        }
 
         let column_header_children = template_elements.get("column_header").ok_or(Common("Missing 'column_header'".to_string()))?.children().ok_or(Common("Empty 'column_header'".to_string()))?;
         let columns = column_header_children.nodes();

@@ -16,7 +16,7 @@
 Cargo.toml
 ```toml
 [dependencies]
-metatron = "0.3.3"
+metatron = "0.3.4"
 ```
 
 ```rust
@@ -37,6 +37,7 @@ fn main() {
 ```kdl
 template {
     title {
+        image src="data/logo.png" width=100 height=100
         header level=1 "$P{company_name} Employee Report"
     }
     page_header {
@@ -103,11 +104,6 @@ template {
 
 ![PDF](https://github.com/igumnoff/metatron/raw/HEAD/pdf.png)
 
-
-# TODO
-- Add image support
-- CLI
-- Rest API server
 
 ## Contributing
 I would love to see contributions from the community. If you experience bugs, feel free to open an issue. If you would like to implement a new feature or bug fix, please follow the steps:
