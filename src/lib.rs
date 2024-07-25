@@ -173,13 +173,13 @@ impl Report {
 
         let table_element_with_footer = Table { headers, rows };
 
-        // println!("{:?}", table_element_with_footer);
+        // log::info!("{:?}", table_element_with_footer);
         elements.push(table_element_with_footer);
 
 
-        // println!("{:?}", rows);
+        // log::info!("{:?}", rows);
         let header = template_elements.get("page_header").ok_or(Common("Missing 'page_header'".to_string()))?.children().ok_or(Common("Empty 'page_header'".to_string()))?;
-        // println!("{:?}", header);
+        // log::info!("{:?}", header);
         let header_text = header.get_args("text").get(0).ok_or(Common("Missing text".to_string()))?.as_string().ok_or(Common("Invalid text".to_string()))?;
         let text_size = header.get("text").ok_or(Common("Missing 'header'".to_string()))?
             .get("size").ok_or(Common("Missing 'size'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'size'".to_string()))?;
@@ -188,10 +188,10 @@ impl Report {
                 size: text_size as u8,
             };
         page_header.push(text_element);
-        // println!("{:?}", page_header);
+        // log::info!("{:?}", page_header);
 
         let footer = template_elements.get("page_footer").ok_or(Common("Missing 'page_footer'".to_string()))?.children().ok_or(Common("Empty 'page_footer'".to_string()))?;
-        // println!("{:?}", footer);
+        // log::info!("{:?}", footer);
         let footer_text = footer.get_args("text").get(0).ok_or(Common("Missing text".to_string()))?.as_string().ok_or(Common("Invalid text".to_string()))?;
         let text_size = footer.get("text").ok_or(Common("Missing 'footer'".to_string()))?
             .get("size").ok_or(Common("Missing 'size'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'size'".to_string()))?;
@@ -200,10 +200,10 @@ impl Report {
                 size: text_size as u8,
             };
         page_footer.push(text_element);
-        // println!("{:?}", page_footer);
+        // log::info!("{:?}", page_footer);
 
         let summary = template_elements.get("summary").ok_or(Common("Missing 'summary'".to_string()))?.children().ok_or(Common("Empty 'summary'".to_string()))?;
-                // println!("{:?}", paragraph_config);
+                // log::info!("{:?}", paragraph_config);
         let  paragraph = summary.get("paragraph").ok_or(Common("Missing 'paragraph'".to_string()))?;
         let  text_element = paragraph.children().ok_or(Common("Missing children".to_string()))?.get("text").ok_or(Common("Missing 'text'".to_string()))?;
         let  size = text_element.get("size").ok_or(Common("Missing 'size'".to_string()))?.value().as_i64().ok_or(Common("Invalid 'size'".to_string()))?;
@@ -256,11 +256,11 @@ mod tests {
         let data = std::fs::read_to_string("data/report-data.json")?;
         let images = HashMap::new();
         let result = Report::generate(&template, &data, &images);
-        println!("{:?}", result);
+        log::info!("{:?}", result);
         assert!(result.is_ok());
         let doc = result?;
-        println!("{:?}", doc);
-        println!("=========================");
+        log::info!("{:?}", doc);
+        log::info!("=========================");
         let result = shiva::pdf::Transformer::generate(&doc)?;
         std::fs::write("./data/report.pdf",result)?;
         let result = shiva::html::Transformer::generate(&doc)?;
