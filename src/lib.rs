@@ -7,7 +7,7 @@ mod utils;
 use bytes::Bytes;
 use serde_json::Value as JValue;
 use shiva::core::Element::{Header, Paragraph, Table, Text};
-use shiva::core::{Document, Element, ImageType, TableCell, TableHeader, TableRow};
+use shiva::core::{Document, Element, ImageAlignment, ImageData, ImageType,ImageDimension, TableCell, TableHeader, TableRow};
 use std::collections::HashMap;
 use kdl::KdlDocument;
 
@@ -75,12 +75,14 @@ impl Report {
                 let image_bytes = std::fs::read(src)?;
                 let image_bytes = Bytes::from(image_bytes);
 
-                let image_element = Element::Image {
-                    bytes: image_bytes,
-                    title: "".to_string(),
-                    alt: "".to_string(),
-                    image_type: ImageType::Png,
-                };
+                let image_element = Element::Image(ImageData::new(
+                    image_bytes,
+                    "".to_string(),
+                    "".to_string(),
+                    ImageType::default().to_string(),
+                    ImageAlignment::default().to_string(),
+                    ImageDimension::default(),
+                ));
                 elements.push(image_element);
             }
         }
@@ -238,9 +240,9 @@ pub enum ReportError {
 
 
 // this function return string with json data like in report-data.json file
-fn from_mysql(connection_url: &str, table_name: &str, columns_name: &[&str]) -> Result<String, ReportError> {
-    todo!()
-}
+// fn from_mysql(connection_url: &str, table_name: &str, columns_name: &[&str]) -> Result<String, ReportError> {
+//     todo!()
+// }
 
 #[cfg(test)]
 mod tests {
@@ -260,9 +262,9 @@ mod tests {
         println!("{:?}", doc);
         println!("=========================");
         let result = shiva::pdf::Transformer::generate(&doc)?;
-        std::fs::write("./data/report.pdf",result.0)?;
+        std::fs::write("./data/report.pdf",result)?;
         let result = shiva::html::Transformer::generate(&doc)?;
-        std::fs::write("./data/report.html",result.0)?;
+        std::fs::write("./data/report.html",result)?;
 
         Ok(())
     }

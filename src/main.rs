@@ -1,21 +1,11 @@
 use std::collections::HashMap;
-use std::io;
-use std::io::Read;
-use std::sync::Arc;
 
-use axum::{body::HttpBody, http::StatusCode, Json, response, Router, routing::{get, post}};
-use axum::body::{Body, BodyDataStream};
-use axum::http::header;
+use axum::{http::StatusCode, Json, Router, routing::post};
+use axum::body::Body;
 use axum::response::{IntoResponse, Response};
-use bytes::buf::Reader;
 use bytes::Bytes;
 use mime;
-use serde::{Deserialize, Serialize, Serializer};
-use shiva::core::{Document, DocumentType, TransformerTrait};
-use tokio::io::ReadBuf;
-use tokio::runtime;
-use tokio_util::io::ReaderStream;
-
+use serde::Deserialize;
 use metatron::Report;
 use utils::to_u8arr;
 
@@ -46,7 +36,7 @@ async fn handler(Json(payload): Json<CreateDocument>) -> impl IntoResponse{
         Err(err) => return Err((StatusCode::NOT_ACCEPTABLE, format!("File is corrupted: {}", err)))
     };
 
-    let document: Bytes = to_u8arr(&file, payload.output_format);
+    let document: Bytes = to_u8arr(&file, &payload.output_format);
     let body = Body::from(document);
 
     let response = Response::builder()
@@ -65,14 +55,15 @@ async fn handler(Json(payload): Json<CreateDocument>) -> impl IntoResponse{
 struct CreateDocument {
     pub report_template: String,
     pub report_data: String,
-    pub output_format: DocumentType,
+    pub output_format: String,
 }
 
 
 #[cfg(test)]
 mod tests{
     use axum_test::TestServer;
-    use http::{HeaderValue, Request};
+    use http::header;
+    use http::HeaderValue;
     use http::StatusCode;
     use serde_json::json;
     use tokio;
@@ -86,12 +77,12 @@ mod tests{
         let report_template = format!("{}/data/report-template.kdl", curdir.clone().into_string().unwrap());
         let report_data = format!("{}/data/report-data.json", curdir.into_string().unwrap());
         let app = Router::new().route("/generate", post(handler));
-        let mut srv = TestServer::new(app);
+        let srv = TestServer::new(app);
 
         let payload = json!({
             "report_template": std::fs::read_to_string(report_template).unwrap(),
             "report_data": std::fs::read_to_string(report_data).unwrap(),
-            "output_format": "Pdf"
+            "output_format": "pdf"
         });
 
         let res = srv.unwrap().post("/generate")
