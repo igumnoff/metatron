@@ -16,7 +16,7 @@
 Cargo.toml
 ```toml
 [dependencies]
-metatron = "0.3.4"
+metatron = "1.0.0"
 ```
 
 ```rust
