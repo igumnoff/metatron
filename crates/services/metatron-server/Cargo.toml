@@ -1,0 +1,35 @@
+[package]
+name = "metatron-server"
+version = "1.0.0"
+edition = "2021"
+authors = ["Evgeny Igumnov <igumnovnsk@gmail.com>"]
+repository = "https://github.com/igumnoff/metatron"
+documentation = "https://docs.rs/metatron"
+license-file = "LICENSE"
+keywords = [
+	"report-generation",
+	"data-reporting",
+	"text-report",
+	"pdf",
+	"template-engine",
+]
+categories = ["text-processing", "web-programming"]
+readme = "README.md"
+description = "Metatron Server "
+
+exclude = ["fonts"]
+
+[dependencies]
+axum = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+tokio-util = { workspace = true, features = ["io"] }
+metatron = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing = { workspace = true }
+mime = { workspace = true }
+
+[dev-dependencies]
+http = { workspace = true }
+axum-test = { workspace = true }
+serde_json = { workspace = true }
