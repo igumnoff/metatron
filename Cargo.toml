@@ -1,36 +1,29 @@
-[package]
-name = "metatron"
-version = "1.0.0"
-edition = "2021"
+[workspace]
 
-authors = ["Evgeny Igumnov <igumnovnsk@gmail.com>"]
-repository = "https://github.com/igumnoff/metatron"
-documentation = "https://docs.rs/metatron"
-license-file = "LICENSE"
-keywords = ["report-generation", "data-reporting",  "text-report", "pdf", "template-engine"]
-categories = ["text-processing", "web-programming"]
-readme = "README.md"
-description = "Metatron library"
+resolver = "2"
 
-exclude = ["fonts"]
+members = [
+	"crates/libs/metatron",
+	"crates/libs/metatron-cli",
+	"crates/services/metatron-server",
+]
 
-[dependencies]
-anyhow = "1.0.75"
-thiserror = "1.0.44"
+[workspace.dependencies]
+tokio = { version = "1.37.0" }
+tokio-util = { version = "0.7.10" }
+axum = "0.7.5"
 #shiva = {path = "../shiva/lib"}
 shiva = "1.1.1"
+metatron = { path = "crates/libs/metatron" }
 kdl = "4.6.0"
+serde = { version = "1.0.198" }
 serde_json = "1.0.115"
-bytes = { version = "1.5.0", features = ["serde"] }
-axum = "0.7.5"
-serde = { version = "1.0.198", features = ["derive"] }
-tokio = { version = "1.37.0", features = ["rt-multi-thread"]}
-tracing-subscriber = "0.3.18"
-tokio-util = { version = "0.7.10", features = ["io"] }
-http = "1.1.0"
 mime = "0.3.17"
+bytes = { version = "1.5.0" }
+thiserror = "1.0.44"
+tracing = "0.1"
+tracing-subscriber = "0.3.18"
+clap = { version = "4.5.3" }
 axum-test = "15.3.0"
-log = "0.4.14"
-
-[dev-dependencies]
-env_logger = "0.11.5"
+anyhow = "1.0.75"
+http = "1.1.0"
