@@ -1,0 +1,11 @@
+[package]
+name = "metatron-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { workspace = true, features = ["derive"] }
+
+[[bin]]
+name = "metatron"
+path = "src/main.rs"
