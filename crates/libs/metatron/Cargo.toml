@@ -1,0 +1,32 @@
+[package]
+name = "metatron"
+version = "0.1.0"
+edition = "2021"
+
+authors = ["Evgeny Igumnov <igumnovnsk@gmail.com>"]
+repository = "https://github.com/igumnoff/metatron"
+documentation = "https://docs.rs/metatron"
+license-file = "LICENSE"
+keywords = [
+	"report-generation",
+	"data-reporting",
+	"text-report",
+	"pdf",
+	"template-engine",
+]
+categories = ["text-processing", "web-programming"]
+readme = "README.md"
+description = "Metatron core library"
+
+exclude = ["fonts"]
+
+[dependencies]
+shiva = { workspace = true }
+kdl = { workspace = true }
+serde_json = { workspace = true }
+bytes = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+anyhow = { workspace = true } # TODO: To remove when removed on Shiva
