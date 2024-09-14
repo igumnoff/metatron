@@ -1,3 +1,6 @@
+//!
+// #![doc = include_str!("../../../../README.md")]
+//!
 mod error;
 
 use bytes::Bytes;

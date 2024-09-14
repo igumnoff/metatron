@@ -1,6 +1,6 @@
 [package]
 name = "metatron"
-version = "0.1.0"
+version = "1.1.0"
 edition = "2021"
 
 authors = ["Evgeny Igumnov <igumnovnsk@gmail.com>"]
@@ -15,7 +15,7 @@ keywords = [
 	"template-engine",
 ]
 categories = ["text-processing", "web-programming"]
-readme = "README.md"
+readme = "../../../README.md"
 description = "Metatron core library"
 
 exclude = ["fonts"]
