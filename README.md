@@ -16,7 +16,7 @@
 Cargo.toml
 ```toml
 [dependencies]
-metatron = "1.1.0"
+metatron = "1.1.1"
 ```
 
 ```rust
@@ -25,12 +25,6 @@ fn main() {
     let data = std::fs::read_to_string("report-data.json").unwrap();
     let images = HashMap::new();
     let result = Report::generate(&template, &data, &images, "pdf").unwrap();
-    // let result = Report::to_markdown(&template, &data, &images).unwrap();
-    // let result = Report::to_html(&template, &data, &images).unwrap();
-    // let result = Report::to_text(&template, &data, &images).unwrap();
-    // let result = Report::to_pdf(&template, &data, &images).unwrap();
-    // let doc = Report::to_document(&template, &data, &images).unwrap();
-    // let result = shiva::pdf::Transformer::generate(&doc).unwrap();
     std::fs::write("report.pdf",result).unwrap();
 }
 ```
