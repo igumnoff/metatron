@@ -27,7 +27,7 @@ async fn main() {
     let args = Args::parse();
 
     let address = format!("0.0.0.0:{}", args.port);
-
+    println!("Listening on {}", address);
     let listener = tokio::net::TcpListener::bind(&address).await.unwrap();
     axum::serve(listener, router()).await.unwrap();
 }
